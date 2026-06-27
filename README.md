@@ -97,11 +97,46 @@ For checkout later: obtain a Catalog JWT from the Dev Dashboard and pass it thro
 `search(query, { jwt })` → `cart`/`checkout` ops. Or expose the whole thing to an AI
 agent by running `ucp --mcp` and pointing the agent at it.
 
+## Coverage-drift monitor
+
+The catalog is live and changes under us: merchants come and go, products sell
+out, a maker that surfaced across five stores last month may surface in two
+today. The monitor turns the one-shot coverage test into a tracked time series.
+
+```bash
+npm run monitor      # = coverage + snapshot + diff (the whole loop in one)
+# or step by step:
+npm run coverage     # writes coverage_summary.json (machine-readable buckets)
+npm run snapshot     # archives it to coverage_history/coverage_<date>.*
+npm run diff         # diffs the two most recent snapshots → stable JSON
+```
+
+- **`coverage_summary.json`** is the stable unit the monitor diffs: per-maker
+  `{bucket, titleHits, vendorHits, count}` plus curated-shelf liveness.
+- **`coverage_history/`** (tracked) accumulates dated snapshots — the time series.
+  Raw envelopes are written there too but git-ignored (768K each; audit-only).
+- **`coverage_diff.mjs`** is **egress-independent** — it only compares two files,
+  so it's deterministic. It reports makers that moved buckets
+  (`downgraded`/`upgraded`/`disappeared`/`appeared`) and curated cards that
+  `broke`/`recovered`/`newlyBroken`. `changed: true` iff anything moved.
+
+Intended for an unattended `/loop` (daily while seeding, weekly once stable):
+run `npm run monitor`, commit the new snapshot, and ping a human only when
+`changed` is true. It never mutates app code or `coverage_targets.json`.
+
+**Curated liveness caveat:** global-catalog *search* is fuzzy and almost always
+returns *something*, so a `query`-based curated card rarely reads "dead." For
+real dead-card / out-of-stock detection, pin curated entries by **`productId`**
+(resolved via `getProduct`), which 404s or reports `available:false` honestly.
+
 ## Files
 
 | File | Purpose |
 |---|---|
-| `lib/catalog.mjs` | Search wrapper over `@shopify/ucp-cli` (auth model documented inline) |
-| `coverage_test.mjs` | Maker coverage test → report + raw dump |
+| `lib/catalog.mjs` | Search wrapper over `@shopify/ucp-cli`: `search()`, `getProduct()`, `ensureProfile()` (auth model documented inline) |
+| `coverage_test.mjs` | Maker coverage test → report + raw dump + machine-readable `coverage_summary.json` (resolves `curated_shelf.json` liveness if present) |
+| `coverage_diff.mjs` | Egress-independent snapshot comparator → stable drift JSON |
+| `snapshot.mjs` | Archives the latest outputs into `coverage_history/` under a dated name |
 | `coverage_targets.json` | Editable maker list (books deferred to `books_v2`) |
-| `package.json` | `npm run coverage` |
+| `coverage_history/` | Tracked time series of dated snapshots |
+| `package.json` | `npm run coverage` / `snapshot` / `diff` / `monitor` |

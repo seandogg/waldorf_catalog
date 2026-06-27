@@ -1,0 +1,2 @@
+# Tracked on purpose: dated coverage snapshots accumulate here as the
+# coverage-drift time series. coverage_diff.mjs compares the two most recent.

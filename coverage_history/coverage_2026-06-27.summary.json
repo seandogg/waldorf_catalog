@@ -1,0 +1,110 @@
+{
+  "generatedAt": "2026-06-27T23:21:11.159Z",
+  "totals": {
+    "strong": 10,
+    "present": 4,
+    "none": 0,
+    "error": 0
+  },
+  "makers": [
+    {
+      "maker": "Grimm's",
+      "bucket": "strong",
+      "titleHits": 5,
+      "vendorHits": 0,
+      "count": 10
+    },
+    {
+      "maker": "Ostheimer",
+      "bucket": "strong",
+      "titleHits": 8,
+      "vendorHits": 0,
+      "count": 10
+    },
+    {
+      "maker": "Holztiger",
+      "bucket": "strong",
+      "titleHits": 6,
+      "vendorHits": 0,
+      "count": 10
+    },
+    {
+      "maker": "Grapat",
+      "bucket": "strong",
+      "titleHits": 8,
+      "vendorHits": 0,
+      "count": 10
+    },
+    {
+      "maker": "Bumbu Toys",
+      "bucket": "strong",
+      "titleHits": 9,
+      "vendorHits": 0,
+      "count": 10
+    },
+    {
+      "maker": "Glückskäfer",
+      "bucket": "strong",
+      "titleHits": 6,
+      "vendorHits": 0,
+      "count": 10
+    },
+    {
+      "maker": "Sarah's Silks",
+      "bucket": "present",
+      "titleHits": 0,
+      "vendorHits": 9,
+      "count": 10
+    },
+    {
+      "maker": "Stockmar",
+      "bucket": "strong",
+      "titleHits": 10,
+      "vendorHits": 0,
+      "count": 10
+    },
+    {
+      "maker": "Mercurius",
+      "bucket": "strong",
+      "titleHits": 10,
+      "vendorHits": 0,
+      "count": 10
+    },
+    {
+      "maker": "Filges",
+      "bucket": "strong",
+      "titleHits": 7,
+      "vendorHits": 0,
+      "count": 10
+    },
+    {
+      "maker": "Nova Natural",
+      "bucket": "present",
+      "titleHits": 1,
+      "vendorHits": 0,
+      "count": 10
+    },
+    {
+      "maker": "Camden Rose",
+      "bucket": "present",
+      "titleHits": 1,
+      "vendorHits": 10,
+      "count": 10
+    },
+    {
+      "maker": "Papoose Toys",
+      "bucket": "strong",
+      "titleHits": 9,
+      "vendorHits": 0,
+      "count": 10
+    },
+    {
+      "maker": "Auris",
+      "bucket": "present",
+      "titleHits": 0,
+      "vendorHits": 2,
+      "count": 10
+    }
+  ],
+  "curated": []
+}

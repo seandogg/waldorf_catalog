@@ -1,5 +1,14 @@
 node_modules/
-coverage_raw.json
-coverage_report.md
 .env
 .ucp/
+
+# Latest-run outputs at repo root are regenerated each run — not tracked.
+# (Dated snapshots under coverage_history/ ARE tracked: they're the time series.)
+/coverage_raw.json
+/coverage_report.md
+/coverage_summary.json
+
+# Dated snapshots ARE tracked, EXCEPT the raw envelopes (~768K each — they'd
+# bloat the repo over a long time series). They're still written to disk locally
+# as an audit trail; only summary + report join the tracked history.
+coverage_history/*.raw.json

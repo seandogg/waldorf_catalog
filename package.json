@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "coverage": "node coverage_test.mjs"
+    "coverage": "node coverage_test.mjs",
+    "snapshot": "node snapshot.mjs",
+    "diff": "node coverage_diff.mjs",
+    "monitor": "node coverage_test.mjs && node snapshot.mjs && node coverage_diff.mjs"
   },
   "keywords": [],
   "author": "",

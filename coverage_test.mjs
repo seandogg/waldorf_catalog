@@ -23,8 +23,8 @@
 //
 // No API keys required: global-catalog search is unauthenticated.
 
-import { readFileSync, writeFileSync } from "node:fs";
-import { ensureProfile, search } from "./lib/catalog.mjs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { ensureProfile, search, getProduct } from "./lib/catalog.mjs";
 
 const TOP_N = 5; // sample matches to record per query
 
@@ -57,6 +57,56 @@ function classify(maker, products) {
   // brand). The hit counts in the report let a curator resolve it at a glance.
   const bucket = titleHits >= 2 ? "strong" : "present";
   return { bucket, titleHits, vendorHits };
+}
+
+// Resolve every entry in curated_shelf.json (if it exists) and report whether
+// each still returns a product and is in stock — so the drift monitor can flag
+// dead cards. Entries are { query|productId, note?, tags? } (see README).
+async function resolveCurated() {
+  const url = new URL("./curated_shelf.json", import.meta.url);
+  if (!existsSync(url)) return [];
+  let entries;
+  try {
+    entries = JSON.parse(readFileSync(url));
+  } catch {
+    console.log("  curated_shelf.json present but unparseable — skipping");
+    return [];
+  }
+  if (!Array.isArray(entries)) entries = entries.shelf ?? entries.items ?? [];
+  if (!entries.length) return [];
+
+  console.log(`\nResolving ${entries.length} curated entries`);
+  const out = [];
+  for (const e of entries) {
+    const ref = e.productId ? `product:${e.productId}` : e.query ? `query:${e.query}` : null;
+    if (!ref) {
+      out.push({ ref: "(invalid)", alive: false, inStock: false, reason: "no query or productId" });
+      continue;
+    }
+    process.stdout.write(`  ${ref} ... `);
+    let product = null, error = null;
+    if (e.productId) {
+      const r = await getProduct(e.productId);
+      product = r.product;
+      error = r.error;
+    } else {
+      const r = await search(e.query);
+      product = r.products?.[0] ?? null;
+      error = r.error;
+    }
+    const alive = !error && !!product;
+    const inStock = alive ? product.available !== false : false; // undefined => assume in stock
+    console.log(alive ? (inStock ? "ok" : "OUT OF STOCK") : "DEAD");
+    out.push({
+      ref,
+      note: e.note ?? null,
+      alive,
+      inStock,
+      title: product?.title ?? null,
+      url: product?.url ?? null,
+    });
+  }
+  return out;
 }
 
 async function run() {
@@ -99,15 +149,39 @@ async function run() {
     });
   }
 
-  writeFileSync(new URL("./coverage_raw.json", import.meta.url), JSON.stringify(rawDump, null, 2));
-  writeFileSync(new URL("./coverage_report.md", import.meta.url), renderReport(rows));
+  const curated = await resolveCurated();
 
   const tally = (b) => rows.filter((r) => r.bucket === b).length;
+
+  // Stable, machine-readable snapshot — the unit the drift monitor diffs.
+  // generatedAt is the only volatile field; coverage_diff.mjs ignores it.
+  const summary = {
+    generatedAt: new Date().toISOString(),
+    totals: {
+      strong: tally("strong"),
+      present: tally("present"),
+      none: tally("none"),
+      error: tally("error"),
+    },
+    makers: rows.map((r) => ({
+      maker: r.maker,
+      bucket: r.bucket,
+      titleHits: r.titleHits ?? 0,
+      vendorHits: r.vendorHits ?? 0,
+      count: r.count,
+    })),
+    curated,
+  };
+
+  writeFileSync(new URL("./coverage_raw.json", import.meta.url), JSON.stringify(rawDump, null, 2));
+  writeFileSync(new URL("./coverage_report.md", import.meta.url), renderReport(rows));
+  writeFileSync(new URL("./coverage_summary.json", import.meta.url), JSON.stringify(summary, null, 2));
+
   console.log(
     `\nDone. strong=${tally("strong")} present=${tally("present")} ` +
       `none=${tally("none")} error=${tally("error")}`
   );
-  console.log("Wrote coverage_report.md and coverage_raw.json");
+  console.log("Wrote coverage_report.md, coverage_raw.json, coverage_summary.json");
 }
 
 function renderReport(rows) {
