@@ -1,0 +1,25 @@
+{
+  "_comment": "Coverage-test targets. v1 is TOYS-FIRST: we measure how deep the global Shopify catalog goes for well-known Waldorf/homeschool toy & craft makers. Replace/extend `makers` with your curator's actual shortlist. Books are deferred to v2 (see `books_v2`).",
+
+  "makers": [
+    "Grimm's",
+    "Ostheimer",
+    "Holztiger",
+    "Grapat",
+    "Bumbu Toys",
+    "Glückskäfer",
+    "Sarah's Silks",
+    "Stockmar",
+    "Mercurius",
+    "Filges",
+    "Nova Natural",
+    "Camden Rose",
+    "Papoose Toys",
+    "Auris"
+  ],
+
+  "books_v2": [
+    "// Deferred to v2. Add specific children's-book titles (and authors) here",
+    "// when the books channel is built, e.g. 'The Story of the Root Children — Sibylle von Olfers'."
+  ]
+}

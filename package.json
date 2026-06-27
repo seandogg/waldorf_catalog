@@ -1,0 +1,17 @@
+{
+  "name": "waldorf-catalog",
+  "version": "1.0.0",
+  "description": "Curated Waldorf/homeschool product discovery on Shopify Catalog API (UCP)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "coverage": "node coverage_test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@shopify/ucp-cli": "^0.6.2"
+  },
+  "type": "module"
+}
