@@ -73,25 +73,29 @@ coverage_targets.json ──▶ coverage_test.mjs ──▶ coverage_report.md  
                                 │
                 ┌───────────────┴───────────────┐
                 ▼                                ▼
-        editorial layer                   shelf renderer (v1, next)
-   curated_shelf.json:                 reads curated_shelf.json, calls
-   [{ query|productId,                 search()/get_product per item,
-      note: "curator voice",           renders a shoppable shelf with
-      tags: [...] }]                    the editorial note beside each card
+        editorial layer                   shelf renderer (DONE)
+   curated_shelf.json:                 render_shelf.mjs reads curated_shelf.json,
+   [{ productId|query,                 calls getProduct()/search() per entry,
+      note: "curator voice",           emits dist/index.html — a static shelf
+      tags: [...] }]                    with each note beside a live product card
 ```
 
-Three small pieces, in build order:
+Three small pieces, all built:
 
-1. **`lib/catalog.mjs`** — ✅ done. `search(query)` and `ensureProfile()` over the
-   official CLI. Add `getProduct(id)` (wraps `ucp catalog get_product`) when the
-   shelf needs full detail.
-2. **Editorial layer** — a plain `curated_shelf.json`: each entry pairs a catalog
-   reference (a search query the curator trusts, or a pinned product id) with an
-   editorial `note` and `tags`. This file *is* the product — version it, no DB needed.
-3. **Shelf renderer** — resolves each entry via `lib/catalog.mjs`, emits a static
-   shoppable shelf (cards: image, title, vendor, price, "Shop" link → the merchant's
-   UCP checkout) with the curator's note rendered alongside. Static HTML/SSR keeps it
-   lean; no backend required for read-only discovery.
+1. **`lib/catalog.mjs`** — ✅ done. `search(query)`, `getProduct(id)`, and
+   `ensureProfile()` over the official CLI.
+2. **Editorial layer** — ✅ a plain `curated_shelf.json`: each entry pairs a catalog
+   reference (a pinned `productId`, recommended — or a `query`) with an editorial
+   `note` and `tags`. This file *is* the product — version it, no DB needed.
+3. **Shelf renderer** — ✅ `render_shelf.mjs` resolves each entry via
+   `lib/catalog.mjs` and emits a static shoppable shelf to `dist/index.html`
+   (cards: image, editorial note, tags, title, vendor, price, "Shop" link → the
+   merchant's UCP checkout). Sold-out items are badged; unresolved picks are
+   hidden and reported. No backend — host the folder anywhere (e.g. GitHub Pages).
+
+```bash
+npm run render      # curated_shelf.json -> dist/index.html
+```
 
 For checkout later: obtain a Catalog JWT from the Dev Dashboard and pass it through
 `search(query, { jwt })` → `cart`/`checkout` ops. Or expose the whole thing to an AI
@@ -137,6 +141,8 @@ real dead-card / out-of-stock detection, pin curated entries by **`productId`**
 | `coverage_test.mjs` | Maker coverage test → report + raw dump + machine-readable `coverage_summary.json` (resolves `curated_shelf.json` liveness if present) |
 | `coverage_diff.mjs` | Egress-independent snapshot comparator → stable drift JSON |
 | `snapshot.mjs` | Archives the latest outputs into `coverage_history/` under a dated name |
+| `curated_shelf.json` | The product itself: curator's pinned picks + editorial notes/tags |
+| `render_shelf.mjs` | Renders `curated_shelf.json` → `dist/index.html` (the v1 frontend) |
 | `coverage_targets.json` | Editable maker list (books deferred to `books_v2`) |
 | `coverage_history/` | Tracked time series of dated snapshots |
-| `package.json` | `npm run coverage` / `snapshot` / `diff` / `monitor` |
+| `package.json` | `npm run coverage` / `snapshot` / `diff` / `monitor` / `render` |

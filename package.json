@@ -8,7 +8,8 @@
     "coverage": "node coverage_test.mjs",
     "snapshot": "node snapshot.mjs",
     "diff": "node coverage_diff.mjs",
-    "monitor": "node coverage_test.mjs && node snapshot.mjs && node coverage_diff.mjs"
+    "monitor": "node coverage_test.mjs && node snapshot.mjs && node coverage_diff.mjs",
+    "render": "node render_shelf.mjs"
   },
   "keywords": [],
   "author": "",

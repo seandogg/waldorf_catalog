@@ -2,6 +2,9 @@ node_modules/
 .env
 .ucp/
 
+# Rendered static shelf — a build artifact (regenerate with `npm run render`).
+dist/
+
 # Latest-run outputs at repo root are regenerated each run — not tracked.
 # (Dated snapshots under coverage_history/ ARE tracked: they're the time series.)
 /coverage_raw.json
