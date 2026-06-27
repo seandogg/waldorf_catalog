@@ -5,8 +5,12 @@
 // homeschool toy & craft makers. For each maker it runs an unauthenticated
 // global-catalog search and buckets coverage:
 //
-//   strong  - a returned product's vendor/title clearly matches the maker
-//   present - results came back, but no clear name match (worth eyeballing)
+//   strong  - the maker surfaces in >=2 product TITLES (the brand appears in
+//             catalog *content*, not merely in a store's name)
+//   present - results came back, but the maker matches in <2 titles (only a
+//             merchant/seller name, or a single/coincidental hit). May be the
+//             maker's own store (real) or a name collision (e.g. an unrelated
+//             "Auris" audio brand). Eyeball via the title/vendor hit counts.
 //   none    - zero results
 //
 // Output:
@@ -32,17 +36,27 @@ function loadMakers() {
 
 const norm = (s) => (s ?? "").toString().toLowerCase().replace(/['']/g, "").trim();
 
-function classify(maker, products) {
-  if (!products.length) return "none";
+// Count how many products match the maker in a single field (title or vendor).
+function matchCount(maker, products, field) {
   const needle = norm(maker).replace(/\s+toys?$/, ""); // "Bumbu Toys" -> "bumbu"
   const tokens = needle.split(/\s+/).filter((t) => t.length > 2);
-  const hit = products.some((p) => {
-    const hay = norm(p.vendor) + " " + norm(p.title);
-    return tokens.length
+  const hit = (hay) =>
+    tokens.length
       ? tokens.every((t) => hay.includes(t)) || hay.includes(needle)
       : hay.includes(needle);
-  });
-  return hit ? "strong" : "present";
+  return products.filter((p) => hit(norm(field(p)))).length;
+}
+
+function classify(maker, products) {
+  if (!products.length) return { bucket: "none", titleHits: 0, vendorHits: 0 };
+  const titleHits = matchCount(maker, products, (p) => p.title);
+  const vendorHits = matchCount(maker, products, (p) => p.vendor);
+  // "strong" requires the brand in >=2 product TITLES. A merchant-name match,
+  // or a lone title hit, is "present" — it may be the maker's own store (real,
+  // e.g. Sarah's Silks) or a name collision (false, e.g. an "Auris" audio
+  // brand). The hit counts in the report let a curator resolve it at a glance.
+  const bucket = titleHits >= 2 ? "strong" : "present";
+  return { bucket, titleHits, vendorHits };
 }
 
 async function run() {
@@ -66,11 +80,15 @@ async function run() {
       continue;
     }
 
-    const bucket = classify(maker, products);
-    console.log(`${products.length} results -> ${bucket}`);
+    const { bucket, titleHits, vendorHits } = classify(maker, products);
+    console.log(
+      `${products.length} results -> ${bucket} (title:${titleHits} vendor:${vendorHits})`
+    );
     rows.push({
       maker,
       bucket,
+      titleHits,
+      vendorHits,
       count: products.length,
       top: products.slice(0, TOP_N).map((p) => ({
         title: p.title,
@@ -118,13 +136,32 @@ function renderReport(rows) {
       : `Coverage is thin (${pct}%). Review misses below before committing to toys-first depth.\n`
   );
 
+  const present = rows.filter((r) => r.bucket === "present");
+  if (present.length) {
+    lines.push("## Eyeball these (present)\n");
+    lines.push(
+      "Results returned but the maker appears in <2 product titles — either the " +
+        "maker's own store (real) or a name collision (false). Check each:\n"
+    );
+    for (const r of present) {
+      const t = r.top?.[0];
+      const why =
+        r.titleHits === 0
+          ? `merchant-name match only (vendor hits: ${r.vendorHits})`
+          : `only ${r.titleHits} title hit`;
+      lines.push(`- **${r.maker}** — ${why}. Top: ${t?.vendor ?? "?"} — ${t?.title ?? "?"}`);
+    }
+    lines.push("");
+  }
+
   lines.push("## Summary table\n");
-  lines.push("| Maker | Coverage | Results | Top match (vendor — title) |");
-  lines.push("|---|---|---:|---|");
+  lines.push("| Maker | Coverage | Results | Title/Vendor hits | Top match (vendor — title) |");
+  lines.push("|---|---|---:|---:|---|");
   for (const r of rows) {
     const t = r.top?.[0];
     const top = t ? `${t.vendor ?? "?"} — ${t.title ?? "?"}` : "—";
-    lines.push(`| ${r.maker} | ${r.bucket} | ${r.count} | ${top} |`);
+    const hits = `${r.titleHits ?? 0}/${r.vendorHits ?? 0}`;
+    lines.push(`| ${r.maker} | ${r.bucket} | ${r.count} | ${hits} | ${top} |`);
   }
   lines.push("");
 
